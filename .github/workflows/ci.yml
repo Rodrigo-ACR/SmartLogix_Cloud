@@ -1,0 +1,91 @@
+name: SmartLogix CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+
+  test-inventario:
+    name: Tests Inventario
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Test Inventario
+        run: mvn test -DskipTests=false
+        working-directory: inventario
+
+      - name: Reporte JaCoCo Inventario
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-inventario
+          path: inventario/target/site/jacoco/
+
+  test-pedidos:
+    name: Tests Pedidos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Test Pedidos
+        run: mvn test -DskipTests=false
+        working-directory: pedidos
+
+      - name: Reporte JaCoCo Pedidos
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-pedidos
+          path: pedidos/target/site/jacoco/
+
+  test-envios:
+    name: Tests Envíos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Test Envíos
+        run: mvn test -DskipTests=false
+        working-directory: envios
+
+      - name: Reporte JaCoCo Envíos
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-envios
+          path: envios/target/site/jacoco/
+
+  test-usuarios:
+    name: Tests Usuarios
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Test Usuarios
+        run: mvn test -DskipTests=false
+        working-directory: usuarios

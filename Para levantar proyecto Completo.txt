@@ -1,0 +1,25 @@
+# 1. Compilar Microservicios Backend (Java / Maven)
+foreach ($servicio in "usuarios", "pedidos", "inventario", "envios", "bff", "eureka-server") {
+    if (Test-Path $servicio) {
+        Write-Host "Compilando $servicio..." -ForegroundColor Cyan
+        cd $servicio
+        mvn clean package -DskipTests
+        cd ..
+    } else {
+        Write-Host "No se encontró la carpeta: $servicio" -ForegroundColor Yellow
+    }
+}
+
+# 2. Preparar Frontend (Opcional - por si tu Dockerfile requiere una build previa)
+if (Test-Path "frontend") {
+    Write-Host "Preparando frontend..." -ForegroundColor Cyan
+    cd frontend
+    # Si tu Dockerfile copia carpetas locales como 'dist' o 'build', descomenta las siguientes líneas:
+    # npm install
+    # npm run build
+    cd ..
+}
+
+# 3. Levantar todo en Docker
+Write-Host "Iniciando contenedores en Docker..." -ForegroundColor Green
+docker-compose up --build -d

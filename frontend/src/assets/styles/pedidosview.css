@@ -1,0 +1,95 @@
+/* Estilos de PedidosView */
+
+.page-title {
+    font-size: 2rem;
+    margin-bottom: 24px;
+}
+
+.tabla-card {
+    overflow: hidden;
+}
+
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tabla th {
+    text-align: left;
+    padding: 14px 20px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+}
+
+.tabla td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+}
+
+.tabla tr:last-child td {
+    border-bottom: none;
+}
+
+.tabla tr:hover td {
+    background: var(--bg-hover);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-center {
+    text-align: center;
+}
+
+.estado-select {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .tabla-card {
+        overflow-x: auto;
+    }
+
+    .tabla {
+        min-width: 600px;
+    }
+
+    .page-title {
+        font-size: 1.4rem;
+    }
+}
+
+/* Productos agrupados en tabla admin */
+.grupo-prod-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+    font-size: 0.88rem;
+}
+
+.texto-prod {
+    flex: 1;
+    color: var(--text-primary);
+}
+
+.badge-qty {
+    background: var(--accent-glow);
+    color: var(--accent);
+    padding: 1px 7px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}

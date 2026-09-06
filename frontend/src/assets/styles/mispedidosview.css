@@ -1,0 +1,528 @@
+/* Estilos de MisPedidosView */
+
+.page-title {
+    font-size: 2rem;
+    margin-bottom: 32px;
+}
+
+.pedidos-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pedido-card {
+    padding: 24px;
+}
+
+.pedido-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.pedido-id {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+}
+
+.pedido-header h3 {
+    font-size: 1.1rem;
+}
+
+.pedido-detalles {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.detalle-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detalle-item span {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.detalle-item strong {
+    font-size: 0.95rem;
+}
+
+.pedido-progress {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+}
+
+.progress-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.progress-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+}
+
+/* ── Pasos de PEDIDO (morado) ── */
+.progress-step.done:not(:last-child)::after {
+    background: var(--accent);
+}
+
+.step-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--border);
+    border: 2px solid var(--border);
+    z-index: 1;
+    transition: var(--transition);
+}
+
+.progress-step.active .step-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.progress-step.done .step-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.progress-step span {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.progress-step.active span {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.progress-step.done span {
+    color: var(--text-secondary);
+}
+
+/* ── Pasos de ENVÍO (verde fosforescente) ── */
+.progress-step.envio-step.done:not(:last-child)::after {
+    background: #00ff88;
+}
+
+.progress-step.envio-step.done .step-dot {
+    background: #00ff88;
+    border-color: #00ff88;
+    box-shadow: 0 0 8px #00ff88aa;
+}
+
+.progress-step.envio-step.active .step-dot {
+    background: #00ff88;
+    border-color: #00ff88;
+    box-shadow: 0 0 0 4px #00ff8844, 0 0 12px #00ff88aa;
+}
+
+.progress-step.envio-step.active span {
+    color: #00ff88;
+    font-weight: 700;
+}
+
+.progress-step.envio-step.done span {
+    color: #00cc6a;
+}
+
+/* ── ENTREGADO: corona dorada especial ── */
+.progress-step.envio-step.entregado-step.done .step-dot,
+.progress-step.envio-step.entregado-step.active .step-dot {
+    background: linear-gradient(135deg, #ffd700, #ff9500);
+    border-color: #ffd700;
+    box-shadow: 0 0 0 4px #ffd70033, 0 0 20px #ffd700aa;
+    animation: coronaBrillo 1.5s ease-in-out infinite alternate;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-step.envio-step.entregado-step.active span,
+.progress-step.envio-step.entregado-step.done span {
+    color: #ffd700;
+    font-weight: 700;
+}
+
+.progress-step.envio-step.entregado-step.done:not(:last-child)::after {
+    background: linear-gradient(90deg, #00ff88, #ffd700);
+}
+
+@keyframes coronaBrillo {
+    from {
+        box-shadow: 0 0 0 4px #ffd70033, 0 0 12px #ffd700aa;
+        transform: scale(1);
+    }
+
+    to {
+        box-shadow: 0 0 0 8px #ffd70022, 0 0 28px #ffd700cc;
+        transform: scale(1.15);
+    }
+}
+
+.progress-step.disabled .step-dot {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.progress-step.disabled span {
+    color: #334155;
+}
+
+/* ── Banner ENTREGADO ── */
+.entregado-banner {
+    margin-top: 1.2rem;
+    padding: 0.8rem 1.2rem;
+    background: linear-gradient(135deg, #ffd70022, #ff950011);
+    border: 1px solid #ffd70055;
+    border-radius: 10px;
+    color: #ffd700;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-align: center;
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.empty-state {
+    text-align: center;
+    padding: 80px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.empty-state span {
+    font-size: 4rem;
+}
+
+.empty-state h3 {
+    font-size: 1.3rem;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.loading-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.skeleton-row {
+    height: 140px;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    animation: shimmer 1.5s infinite;
+    background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+    background-size: 200% 100%;
+}
+
+.pedidos-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pedido-card {
+    padding: 24px;
+}
+
+.pedido-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.pedido-id {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+}
+
+.pedido-header h3 {
+    font-size: 1.1rem;
+}
+
+.pedido-detalles {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.detalle-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detalle-item span {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.detalle-item strong {
+    font-size: 0.95rem;
+}
+
+.pedido-progress {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+}
+
+.progress-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.progress-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+}
+
+.progress-step.done:not(:last-child)::after {
+    background: var(--accent);
+}
+
+.step-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--border);
+    border: 2px solid var(--border);
+    z-index: 1;
+    transition: var(--transition);
+}
+
+.progress-step.active .step-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.progress-step.done .step-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.progress-step span {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.progress-step.active span {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.progress-step.done span {
+    color: var(--text-secondary);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 80px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.empty-state span {
+    font-size: 4rem;
+}
+
+.empty-state h3 {
+    font-size: 1.3rem;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.loading-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.skeleton-row {
+    height: 140px;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    animation: shimmer 1.5s infinite;
+    background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+    background-size: 200% 100%;
+}
+
+/* Banner error Circuit Breaker */
+.error-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.5rem;
+    animation: fadeInDown 0.4s ease;
+}
+
+.error-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.error-banner strong {
+    color: var(--danger);
+    font-size: 0.95rem;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.error-banner p {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    margin: 0;
+}
+
+.btn-retry {
+    margin-left: auto;
+    flex-shrink: 0;
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius);
+    padding: 0.45rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.btn-retry:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.btn-cancelar-pedido {
+    background: rgba(239, 68, 68, 0.08);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: var(--radius);
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-cancelar-pedido:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* Grupo de productos en una compra */
+.grupo-productos {
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.grupo-producto-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+}
+
+.grupo-prod-nombre {
+    flex: 1;
+    color: var(--text-primary);
+}
+
+.grupo-prod-qty {
+    background: var(--accent-glow);
+    color: var(--accent);
+    padding: 1px 8px;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.grupo-prod-id {
+    font-size: 0.75rem;
+}

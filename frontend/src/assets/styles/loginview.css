@@ -1,0 +1,228 @@
+/* Estilos de LoginView */
+
+.login-page {
+    display: flex;
+    min-height: 100vh;
+}
+
+.login-left {
+    flex: 1;
+    background: linear-gradient(135deg, #0d0d18 0%, #1a0a2e 50%, #0a0a0f 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-left::before {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+    top: -100px;
+    right: -100px;
+}
+
+.login-brand .brand-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 16px;
+}
+
+.login-brand h1 {
+    font-size: 3.5rem;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+}
+
+.login-brand p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    max-width: 360px;
+    line-height: 1.6;
+}
+
+.login-features {
+    margin-top: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.feature {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.login-right {
+    width: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: var(--bg-secondary);
+}
+
+.login-box {
+    width: 100%;
+    max-width: 380px;
+}
+
+.login-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 28px;
+}
+
+.login-tabs button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.login-tabs button.active {
+    background: var(--accent);
+    color: white;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.error-msg {
+    color: var(--danger);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+@media (max-width: 900px) {
+    .login-left {
+        padding: 40px 30px;
+        flex: 0 0 300px;
+    }
+
+    .login-right {
+        width: 100%;
+        flex: 1;
+    }
+
+    .login-brand h1 {
+        font-size: 2.2rem;
+    }
+
+    .login-brand p {
+        font-size: 0.95rem;
+    }
+
+    .login-brand .brand-icon {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .login-left {
+        display: none;
+    }
+
+    .login-right {
+        width: 100%;
+    }
+}
+
+/* Bloqueo por múltiples intentos */
+.bloqueo-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.8rem;
+    animation: shake 0.4s ease;
+}
+
+.bloqueo-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.bloqueo-banner strong {
+    color: #ef4444;
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.bloqueo-banner p {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.bloqueo-timer {
+    color: #ef4444 !important;
+    font-weight: 600;
+    margin-top: 4px !important;
+    font-size: 0.85rem !important;
+}
+
+/* Servicio caído */
+.servicio-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.8rem;
+    font-size: 0.85rem;
+    color: #f59e0b;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-6px);
+    }
+
+    40% {
+        transform: translateX(6px);
+    }
+
+    60% {
+        transform: translateX(-4px);
+    }
+
+    80% {
+        transform: translateX(4px);
+    }
+}
