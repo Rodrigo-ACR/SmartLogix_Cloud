@@ -4,7 +4,6 @@
             <div class="navbar-brand" @click="$router.push('/admin')">
                 <span>⚡</span> SmartLogix <span class="admin-tag">Admin</span>
             </div>
-
             <div class="navbar-links">
                 <router-link to="/admin">Dashboard</router-link>
                 <router-link to="/admin/productos">Productos</router-link>
@@ -13,7 +12,6 @@
                 <router-link to="/admin/clientes">Clientes</router-link>
                 <router-link to="/ep1-demo" class="ep1-link">🎓 Demo EP1</router-link>
             </div>
-
             <div class="navbar-user">
                 <span class="toggle-desktop"><ThemeToggle /></span>
                 <span class="user-name">{{ nombre }}</span>
@@ -21,12 +19,10 @@
                     <Icons name="logout" :size="20" color="currentColor" />
                 </button>
             </div>
-
             <button class="hamburger" @click="menuAbierto = !menuAbierto" :class="{ open: menuAbierto }">
                 <span></span><span></span><span></span>
             </button>
         </div>
-
         <div class="mobile-menu" :class="{ open: menuAbierto }">
             <router-link to="/admin"           @click="menuAbierto = false">🏠 Dashboard</router-link>
             <router-link to="/admin/productos" @click="menuAbierto = false">📦 Productos</router-link>
@@ -54,7 +50,7 @@
 import ThemeToggle from "./ThemeToggle.vue";
 import Icons from "./Icons.vue";
 import "@/assets/styles/navbaradmin.css";
-import { logoutMsal, isAuthenticated } from "../msal.js";
+import { logoutMsal } from "../msal.js";
 
 export default {
     components: { ThemeToggle, Icons },
@@ -66,12 +62,7 @@ export default {
     },
     methods: {
         async logout() {
-            localStorage.clear();
-            if (isAuthenticated()) {
-                await logoutMsal();
-            } else {
-                this.$router.push("/login");
-            }
+            await logoutMsal();
         }
     }
 }

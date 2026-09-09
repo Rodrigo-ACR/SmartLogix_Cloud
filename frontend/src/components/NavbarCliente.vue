@@ -4,7 +4,6 @@
             <div class="navbar-brand" @click="$router.push('/inicio')">
                 <span>⚡</span> SmartLogix
             </div>
-
             <div class="navbar-links">
                 <router-link to="/inicio">Inicio</router-link>
                 <router-link to="/mis-pedidos" class="link-badge-wrap">
@@ -13,26 +12,19 @@
                 </router-link>
                 <router-link to="/perfil">Mi Perfil</router-link>
             </div>
-
             <div class="navbar-user">
-                <span class="toggle-desktop">
-                    <ThemeToggle />
-                </span>
+                <span class="toggle-desktop"><ThemeToggle /></span>
                 <span class="user-name">{{ nombre }}</span>
                 <button class="btn-logout" @click="logout" title="Cerrar sesión">
                     <Icons name="logout" :size="20" color="currentColor" />
                 </button>
             </div>
-
             <button class="hamburger" @click="menuAbierto = !menuAbierto" :class="{ open: menuAbierto }">
-                <span></span>
-                <span></span>
-                <span></span>
+                <span></span><span></span><span></span>
             </button>
         </div>
-
         <div class="mobile-menu" :class="{ open: menuAbierto }">
-            <router-link to="/inicio" @click="menuAbierto = false">🏠 Inicio</router-link>
+            <router-link to="/inicio"      @click="menuAbierto = false">🏠 Inicio</router-link>
             <router-link to="/mis-pedidos" @click="menuAbierto = false" class="link-badge-wrap">
                 📦 Mis Pedidos
                 <span v-if="pedidosActivos > 0" class="nav-badge">{{ pedidosActivos }}</span>
@@ -56,15 +48,16 @@
 
 <script>
 import ThemeToggle from "./ThemeToggle.vue";
-import { getPedidos, getEnvios } from "../services/api";
 import Icons from "./Icons.vue";
+import { getPedidos, getEnvios } from "../services/api";
 import "@/assets/styles/navbarcliente.css";
+import { logoutMsal } from "../msal.js";
+
 export default {
     components: { ThemeToggle, Icons },
     data() {
         return {
             nombre: localStorage.getItem("nombre") || "Cliente",
-            correo: localStorage.getItem("correo") || "",
             menuAbierto: false,
             pedidosActivos: 0
         };
@@ -74,21 +67,16 @@ export default {
             const nombre = localStorage.getItem("nombre") || "";
             const correo = localStorage.getItem("correo") || "";
             const [pedidosRes, enviosRes] = await Promise.allSettled([getPedidos(), getEnvios()]);
-
             const misPedidos = pedidosRes.status === "fulfilled"
                 ? pedidosRes.value.filter(p => p.cliente === nombre || p.cliente === correo)
                 : [];
             const misEnvios = enviosRes.status === "fulfilled" ? enviosRes.value : [];
-
-            // Agrupar por grupoId (o id individual si no tiene grupo)
             const grupos = {};
             misPedidos.forEach(p => {
                 const key = p.grupoId || ("solo_" + p.id);
                 if (!grupos[key]) grupos[key] = [];
                 grupos[key].push(p);
             });
-
-            // Contar grupos cuyo estado final no sea ENTREGADO ni RECHAZADO
             let activos = 0;
             Object.values(grupos).forEach(items => {
                 const envio = misEnvios.find(e => e.pedidoId === items[0].id);
@@ -99,9 +87,8 @@ export default {
         } catch { this.pedidosActivos = 0; }
     },
     methods: {
-        logout() {
-            localStorage.clear();
-            this.$router.push("/login");
+        async logout() {
+            await logoutMsal();
         }
     }
 }
