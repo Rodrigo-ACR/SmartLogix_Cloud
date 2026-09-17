@@ -1,0 +1,8 @@
+com\smartlogix\inventario\service\ProductoService.class
+com\smartlogix\inventario\model\Producto.class
+com\smartlogix\inventario\exception\GlobalExceptionHandler.class
+com\smartlogix\inventario\controller\ProductoController.class
+com\smartlogix\inventario\repository\ProductoRepository.class
+com\smartlogix\inventario\exception\ApiError.class
+com\smartlogix\inventario\config\SwaggerConfig.class
+com\smartlogix\inventario\InventarioApplication.class

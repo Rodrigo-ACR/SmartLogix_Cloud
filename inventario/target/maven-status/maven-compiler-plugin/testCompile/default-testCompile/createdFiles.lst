@@ -1,0 +1,5 @@
+com\smartlogix\inventario\controller\ProductoControllerTest.class
+com\smartlogix\inventario\integration\ProductoIntegrationTest.class
+com\smartlogix\inventario\service\ProductoServiceTest.class
+com\smartlogix\inventario\service\ProductoStockTest.class
+com\smartlogix\inventario\InventarioApplicationTests.class

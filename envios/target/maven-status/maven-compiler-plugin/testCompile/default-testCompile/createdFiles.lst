@@ -1,0 +1,5 @@
+com\smartlogix\envios\EnviosApplicationTests.class
+com\smartlogix\envios\service\EnvioServiceTest.class
+com\smartlogix\envios\service\EnvioTransicionEstadoTest.class
+com\smartlogix\envios\controller\EnvioControllerTest.class
+com\smartlogix\envios\integration\EnvioIntegrationTest.class
