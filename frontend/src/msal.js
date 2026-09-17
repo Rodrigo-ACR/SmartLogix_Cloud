@@ -7,13 +7,13 @@ const msalConfig = {
   auth: {
     clientId:    '68258a69-110e-4fcc-a4f8-b0eb57891e0a',
     authority:   'https://login.microsoftonline.com/275bee47-23c3-4b55-87a5-37dc048751cb',
-    redirectUri: 'http://localhost:5173',
+    redirectUri: 'http://44.199.171.235:5173',
   },
   cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
 };
 
 export const msalAdmin   = new PublicClientApplication(msalConfig);
-export const msalCliente = msalAdmin; // mismo tenant
+export const msalCliente = msalAdmin;
 export const msalInstance = msalAdmin;
 
 export const loginRequestAdmin = {
@@ -55,13 +55,11 @@ export async function logoutMsal() {
   const accounts = msalAdmin.getAllAccounts();
   if (accounts.length > 0) {
     try {
-      // logoutPopup cierra sesión Microsoft sin necesitar HTTPS
       await msalAdmin.logoutPopup({
         account: accounts[0],
         mainWindowRedirectUri: '/login'
       });
     } catch {
-      // Si falla el popup, limpiar cuentas manualmente
       msalAdmin.clearCache();
     }
   }
