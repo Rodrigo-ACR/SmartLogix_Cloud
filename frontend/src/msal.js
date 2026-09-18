@@ -8,6 +8,7 @@ const msalConfig = {
     clientId:    '68258a69-110e-4fcc-a4f8-b0eb57891e0a',
     authority:   'https://login.microsoftonline.com/275bee47-23c3-4b55-87a5-37dc048751cb',
     redirectUri: 'https://3.224.21.65',
+    postLogoutRedirectUri: 'https://3.224.21.65/login',
   },
   cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
 };
@@ -50,18 +51,18 @@ export async function loginMsal() {
 }
 
 export async function logoutMsal() {
+  const accounts = msalAdmin.getAllAccounts();
   localStorage.clear();
   sessionStorage.clear();
-  const accounts = msalAdmin.getAllAccounts();
+
   if (accounts.length > 0) {
-    try {
-      await msalAdmin.logoutPopup({
-        account: accounts[0],
-        mainWindowRedirectUri: '/login'
-      });
-    } catch {
-      msalAdmin.clearCache();
-    }
+    // logoutRedirect cierra la sesión también en el lado de Microsoft
+    // (gracias a la URL de cierre de sesión del canal frontal configurada en Azure)
+    await msalAdmin.logoutRedirect({
+      account: accounts[0],
+      postLogoutRedirectUri: 'https://3.224.21.65/login'
+    });
+  } else {
+    window.location.href = '/login';
   }
-  window.location.href = '/login';
 }
