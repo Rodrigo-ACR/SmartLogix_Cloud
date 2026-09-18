@@ -310,6 +310,25 @@ public class BffController {
         }
 
         // =================================================
+        // USUARIOS - SYNC AZURE (login con Microsoft)
+        // =================================================
+
+        @PostMapping("/usuarios/sync-azure")
+        @CircuitBreaker(name = "usuarios", fallbackMethod = "fallbackSyncAzure")
+        public ResponseEntity<Object> sincronizarAzure(
+                        @RequestBody Object body) {
+
+                logger.info("POST /api/productos/usuarios/sync-azure");
+
+                Object respuesta = rest.postForObject(
+                                URL_USUARIOS + "/sync-azure",
+                                body,
+                                Object.class);
+
+                return ResponseEntity.ok(respuesta);
+        }
+
+        // =================================================
         // FALLBACK INVENTARIO
         // =================================================
 
@@ -429,6 +448,17 @@ public class BffController {
                 return ResponseEntity.status(503)
                                 .body(new ApiError(
                                                 "Usuarios temporalmente no disponible",
+                                                503));
+        }
+
+        public ResponseEntity<Object> fallbackSyncAzure(
+                        Object body, Throwable e) {
+
+                logger.error("CircuitBreaker SYNC AZURE: {}", e.getMessage());
+
+                return ResponseEntity.status(503)
+                                .body(new ApiError(
+                                                "No se pudo sincronizar usuario de Azure AD",
                                                 503));
         }
 
