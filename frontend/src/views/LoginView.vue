@@ -81,7 +81,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { msalAdmin, loginRequestAdmin } from '../msal.js';
-import { login, register } from '../services/api.js';
+import { login as loginApi, register } from '../services/api.js';
 
 const router        = useRouter();
 const loading        = ref(null);
@@ -124,7 +124,7 @@ async function loginLocal() {
     loadingLocal.value = true;
     error.value = '';
     try {
-        const res = await login(correo.value, password.value);
+        const res = await loginApi(correo.value, password.value);
         if (res.token) {
             localStorage.setItem('token',  res.token);
             localStorage.setItem('rol',    res.rol);
