@@ -70,6 +70,13 @@ async function login() {
 async function registrar() {
     loading.value = 'registro';
     try {
+        // Limpiar cualquier cuenta MSAL en caché para forzar
+        // que Azure AD muestre el formulario de registro, no un SSO directo
+        const accounts = msalAdmin.getAllAccounts();
+        accounts.forEach(acc => msalAdmin.getTokenCache().removeAccount(acc));
+        localStorage.clear();
+        sessionStorage.clear();
+
         await msalAdmin.loginRedirect({
             ...loginRequestAdmin,
             prompt: 'create'
