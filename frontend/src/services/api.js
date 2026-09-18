@@ -1,4 +1,5 @@
-const BASE_URL = "http://localhost:8085";
+//const BASE_URL = "http://localhost:8085";
+const BASE_URL = "http://3.224.21.65:8085";
 
 export const getToken  = () => localStorage.getItem("azure_token") || localStorage.getItem("token");
 export const getRol    = () => localStorage.getItem("rol");
