@@ -11,6 +11,7 @@ import com.smartlogix.usuarios.repository.UsuarioRepository;
 
 import com.smartlogix.usuarios.dto.LoginResponse;
 import com.smartlogix.usuarios.dto.RegisterRequest;
+import com.smartlogix.usuarios.dto.AzureSyncRequest;
 
 @Service
 public class UsuarioService {
@@ -69,7 +70,6 @@ public class UsuarioService {
                 .findByCorreo(correo)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Validación de usuario inactivo (corrige TF-03)
         if (Boolean.FALSE.equals(usuario.getActivo())) {
             throw new RuntimeException("Usuario inhabilitado");
         }
@@ -102,6 +102,32 @@ public class UsuarioService {
         usuario.setDireccion(request.getDireccion());
         usuario.setRol(Rol.CLIENTE);
         usuario.setActivo(true);
+
+        return repository.save(usuario);
+    }
+
+    /**
+     * Sincroniza (crea o actualiza) un usuario autenticado via Azure AD.
+     * Se llama cada vez que un usuario hace login con Microsoft — así el
+     * microservicio de Usuarios refleja también a los usuarios de Azure AD,
+     * no solo a los que se registraron localmente.
+     */
+    public Usuario sincronizarAzure(AzureSyncRequest request) {
+
+        Optional<Usuario> existenteOpt = repository.findByCorreo(request.getCorreo());
+
+        Usuario usuario = existenteOpt.orElseGet(Usuario::new);
+
+        usuario.setNombre(request.getNombre());
+        usuario.setCorreo(request.getCorreo());
+        usuario.setRol(Rol.valueOf(request.getRol()));
+        usuario.setActivo(true);
+
+        // Password ficticio — este usuario se autentica solo via Azure AD,
+        // nunca con login local, así que el campo no se usa para validar.
+        if (usuario.getPassword() == null) {
+            usuario.setPassword("AZURE_AD_SSO");
+        }
 
         return repository.save(usuario);
     }
