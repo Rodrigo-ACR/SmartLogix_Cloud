@@ -55,7 +55,12 @@ onMounted(() => {
 async function login() {
     loading.value = 'login';
     try {
-        await msalAdmin.loginRedirect(loginRequestAdmin);
+        // select_account fuerza a mostrar el selector de cuentas de Microsoft
+        // en vez de reutilizar automáticamente la sesión activa del navegador
+        await msalAdmin.loginRedirect({
+            ...loginRequestAdmin,
+            prompt: 'select_account'
+        });
     } catch (e) {
         console.error('Login error:', e);
         loading.value = null;
@@ -65,8 +70,6 @@ async function login() {
 async function registrar() {
     loading.value = 'registro';
     try {
-        // prompt: 'create' fuerza a Azure AD a mostrar el flujo de registro
-        // de una cuenta nueva en vez de pedir credenciales existentes.
         await msalAdmin.loginRedirect({
             ...loginRequestAdmin,
             prompt: 'create'
