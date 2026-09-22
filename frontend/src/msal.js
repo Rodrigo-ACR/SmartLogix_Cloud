@@ -1,14 +1,11 @@
 import { PublicClientApplication } from '@azure/msal-browser';
 
-// =====================================================
-// Tenant SmartLogix — Admin y Cliente
-// =====================================================
 const msalConfig = {
   auth: {
     clientId:    '68258a69-110e-4fcc-a4f8-b0eb57891e0a',
     authority:   'https://login.microsoftonline.com/275bee47-23c3-4b55-87a5-37dc048751cb',
-    redirectUri: 'https://3.224.21.65',
-    postLogoutRedirectUri: 'https://3.224.21.65/login',
+    redirectUri: 'https://100.51.163.7',
+    postLogoutRedirectUri: 'https://100.51.163.7/login',
   },
   cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
 };
@@ -54,14 +51,13 @@ export async function logoutMsal() {
   const accounts = msalAdmin.getAllAccounts();
   localStorage.clear();
   sessionStorage.clear();
+  msalAdmin.clearCache();
 
   if (accounts.length > 0) {
-    // logoutRedirect cierra la sesión también en el lado de Microsoft
-    // (gracias a la URL de cierre de sesión del canal frontal configurada en Azure)
-    await msalAdmin.logoutRedirect({
-      account: accounts[0],
-      postLogoutRedirectUri: 'https://3.224.21.65/login'
-    });
+    const tenantId = '275bee47-23c3-4b55-87a5-37dc048751cb';
+    const postLogout = encodeURIComponent('https://100.51.163.7/login');
+    window.location.href =
+      `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/logout?post_logout_redirect_uri=${postLogout}`;
   } else {
     window.location.href = '/login';
   }
