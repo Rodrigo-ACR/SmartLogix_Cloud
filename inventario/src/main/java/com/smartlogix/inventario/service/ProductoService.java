@@ -11,9 +11,14 @@ import java.util.Optional;
 public class ProductoService {
 
     private final ProductoRepository repo;
+    private final StockEventProducer stockEventProducer;
 
-    public ProductoService(ProductoRepository repo) {
+    // Umbral minimo de stock: por debajo de este valor se publica una alerta
+    private static final int UMBRAL_STOCK_MINIMO = 5;
+
+    public ProductoService(ProductoRepository repo, StockEventProducer stockEventProducer) {
         this.repo = repo;
+        this.stockEventProducer = stockEventProducer;
     }
 
     public List<Producto> listarTodos() {
@@ -96,5 +101,12 @@ public class ProductoService {
 
         p.setStock(p.getStock() - cantidad);
         repo.save(p);
+
+        // Si el stock quedo por debajo del umbral minimo, se publica una
+        // alerta de forma asincrona hacia RabbitMQ (Exchange tipo fanout:
+        // se difunde a todos los suscriptores interesados en esta alerta).
+        if (p.getStock() < UMBRAL_STOCK_MINIMO) {
+            stockEventProducer.publicarStockBajo(p.getId(), p.getNombre(), p.getStock());
+        }
     }
 }

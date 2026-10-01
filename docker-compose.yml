@@ -69,9 +69,12 @@ services:
       EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:8091/actuator/info
       EUREKA_INSTANCE_HEALTHCHECKURL: http://localhost:8091/actuator/health
       EUREKA_INSTANCE_HOMEPAGEURL: http://localhost:8091/swagger-ui.html
+      RABBITMQ_ADDRESSES: rabbitmq1:5672,rabbitmq2:5672
     depends_on:
       - postgres-inventario
       - eureka-server
+      - rabbitmq1
+      - rabbitmq2
 
   pedidos:
     build: ./pedidos
@@ -90,9 +93,12 @@ services:
       EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:8092/actuator/info
       EUREKA_INSTANCE_HEALTHCHECKURL: http://localhost:8092/actuator/health
       EUREKA_INSTANCE_HOMEPAGEURL: http://localhost:8092/swagger-ui.html
+      RABBITMQ_ADDRESSES: rabbitmq1:5672,rabbitmq2:5672
     depends_on:
       - postgres-pedidos
       - eureka-server
+      - rabbitmq1
+      - rabbitmq2
 
   envios:
     build: ./envios
@@ -111,9 +117,12 @@ services:
       EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:8093/actuator/info
       EUREKA_INSTANCE_HEALTHCHECKURL: http://localhost:8093/actuator/health
       EUREKA_INSTANCE_HOMEPAGEURL: http://localhost:8093/swagger-ui.html
+      RABBITMQ_ADDRESSES: rabbitmq1:5672,rabbitmq2:5672
     depends_on:
       - postgres-envios
       - eureka-server
+      - rabbitmq1
+      - rabbitmq2
 
   usuarios:
     build: ./usuarios
@@ -132,9 +141,12 @@ services:
       EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:8094/actuator/info
       EUREKA_INSTANCE_HEALTHCHECKURL: http://localhost:8094/actuator/health
       EUREKA_INSTANCE_HOMEPAGEURL: http://localhost:8094/swagger-ui.html
+      RABBITMQ_ADDRESSES: rabbitmq1:5672,rabbitmq2:5672
     depends_on:
       - postgres-usuarios
       - eureka-server
+      - rabbitmq1
+      - rabbitmq2
 
   bff:
     build: ./bff
@@ -175,3 +187,63 @@ services:
       - "443:443"
     depends_on:
       - frontend
+
+  # =====================================================================
+  # CLUSTER DE RABBITMQ (2 NODOS) - EP2
+  # =====================================================================
+  rabbitmq1:
+    image: rabbitmq:3-management
+    container_name: rabbitmq1
+    hostname: rabbitmq1
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SMARTLOGIX_CLUSTER_COOKIE"
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  rabbitmq2:
+    image: rabbitmq:3-management
+    container_name: rabbitmq2
+    hostname: rabbitmq2
+    restart: always
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SMARTLOGIX_CLUSTER_COOKIE"
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    depends_on:
+      - rabbitmq1
+    # Espera a que rabbitmq1 este arriba, y se une al cluster como
+    # segundo nodo usando el mismo Erlang cookie (clave compartida
+    # que permite a los nodos de RabbitMQ reconocerse entre si).
+    command: >
+      bash -c "
+      (rabbitmq-server &) ;
+      sleep 15 ;
+      rabbitmqctl stop_app ;
+      rabbitmqctl join_cluster rabbit@rabbitmq1 ;
+      rabbitmqctl start_app ;
+      tail -f /dev/null
+      "
+
+  # =====================================================================
+  # MICROSERVICIO ADMINISTRADOR DE RABBITMQ - EP2
+  # =====================================================================
+  rabbitadmin:
+    build: ./rabbitadmin
+    container_name: rabbitadmin
+    restart: always
+    ports:
+      - "8095:8095"
+    environment:
+      RABBITMQ_ADDRESSES: rabbitmq1:5672,rabbitmq2:5672
+      EUREKA_URL: http://eureka-server:8761/eureka
+    depends_on:
+      - rabbitmq1
+      - rabbitmq2
+      - eureka-server

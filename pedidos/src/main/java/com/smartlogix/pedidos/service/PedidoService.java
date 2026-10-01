@@ -15,6 +15,7 @@ import java.util.Set;
 public class PedidoService {
 
     private final PedidoRepository repo;
+    private final PedidoEventProducer pedidoEventProducer;
 
     /**
      * Máquina de estados del pedido (patrón State simplificado):
@@ -33,8 +34,9 @@ public class PedidoService {
             EstadoPedido.RECHAZADO, Set.of(),
             EstadoPedido.EN_PREPARACION, Set.of());
 
-    public PedidoService(PedidoRepository repo) {
+    public PedidoService(PedidoRepository repo, PedidoEventProducer pedidoEventProducer) {
         this.repo = repo;
+        this.pedidoEventProducer = pedidoEventProducer;
     }
 
     public List<Pedido> listarTodos() {
@@ -62,7 +64,15 @@ public class PedidoService {
         p.setFecha(LocalDate.now());
         p.setEstado(EstadoPedido.CREADO);
 
-        return repo.save(p);
+        Pedido guardado = repo.save(p);
+
+        // Publica el evento de forma asincrona hacia RabbitMQ para que el
+        // consumidor genere la notificacion/ticket correspondiente, sin
+        // bloquear la respuesta HTTP de creacion del pedido.
+        pedidoEventProducer.publicarPedidoCreado(
+                guardado.getId(), guardado.getCliente(), (double) guardado.getCantidad());
+
+        return guardado;
     }
 
     public Pedido cambiarEstado(Long id, EstadoPedido nuevoEstado) {

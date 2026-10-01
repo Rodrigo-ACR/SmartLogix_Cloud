@@ -1,5 +1,8 @@
 import { PublicClientApplication } from '@azure/msal-browser';
 
+// =====================================================
+// Tenant SmartLogix — Admin y Cliente
+// =====================================================
 const msalConfig = {
   auth: {
     clientId:    '68258a69-110e-4fcc-a4f8-b0eb57891e0a',
@@ -48,11 +51,10 @@ export async function loginMsal() {
 }
 
 export async function logoutMsal() {
-  const accounts = msalAdmin.getAllAccounts();
   localStorage.clear();
   sessionStorage.clear();
   msalAdmin.clearCache();
-
+  const accounts = msalAdmin.getAllAccounts();
   if (accounts.length > 0) {
     const tenantId = '275bee47-23c3-4b55-87a5-37dc048751cb';
     const postLogout = encodeURIComponent('https://100.51.163.7/login');

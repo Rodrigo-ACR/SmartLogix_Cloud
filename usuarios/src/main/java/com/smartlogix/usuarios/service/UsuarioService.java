@@ -17,9 +17,11 @@ import com.smartlogix.usuarios.dto.AzureSyncRequest;
 public class UsuarioService {
 
     private final UsuarioRepository repository;
+    private final UsuarioEventProducer usuarioEventProducer;
 
-    public UsuarioService(UsuarioRepository repository) {
+    public UsuarioService(UsuarioRepository repository, UsuarioEventProducer usuarioEventProducer) {
         this.repository = repository;
+        this.usuarioEventProducer = usuarioEventProducer;
     }
 
     public List<Usuario> listarTodos() {
@@ -103,7 +105,12 @@ public class UsuarioService {
         usuario.setRol(Rol.CLIENTE);
         usuario.setActivo(true);
 
-        return repository.save(usuario);
+        Usuario guardado = repository.save(usuario);
+
+        // Publica el evento de bienvenida de forma asincrona hacia RabbitMQ.
+        usuarioEventProducer.publicarUsuarioNuevo(guardado.getNombre(), guardado.getCorreo());
+
+        return guardado;
     }
 
     /**
@@ -115,6 +122,7 @@ public class UsuarioService {
     public Usuario sincronizarAzure(AzureSyncRequest request) {
 
         Optional<Usuario> existenteOpt = repository.findByCorreo(request.getCorreo());
+        boolean esNuevo = existenteOpt.isEmpty();
 
         Usuario usuario = existenteOpt.orElseGet(Usuario::new);
 
@@ -129,6 +137,14 @@ public class UsuarioService {
             usuario.setPassword("AZURE_AD_SSO");
         }
 
-        return repository.save(usuario);
+        Usuario guardado = repository.save(usuario);
+
+        // Solo se publica el evento de bienvenida si el usuario es nuevo
+        // (primera vez que inicia sesion con Azure AD), no en cada login.
+        if (esNuevo) {
+            usuarioEventProducer.publicarUsuarioNuevo(guardado.getNombre(), guardado.getCorreo());
+        }
+
+        return guardado;
     }
 }

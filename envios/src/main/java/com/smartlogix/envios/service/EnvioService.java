@@ -15,6 +15,7 @@ import java.util.Set;
 public class EnvioService {
 
     private final EnvioRepository repo;
+    private final EnvioEventProducer envioEventProducer;
 
     /**
      * Máquina de estados del envío (patrón State simplificado):
@@ -33,8 +34,9 @@ public class EnvioService {
             EstadoEnvio.ENTREGADO,    Set.of(),
             EstadoEnvio.INCIDENCIA,   Set.of(EstadoEnvio.ASIGNADO));
 
-    public EnvioService(EnvioRepository repo) {
+    public EnvioService(EnvioRepository repo, EnvioEventProducer envioEventProducer) {
         this.repo = repo;
+        this.envioEventProducer = envioEventProducer;
     }
 
     public List<Envio> listarTodos() {
@@ -79,7 +81,13 @@ public class EnvioService {
         }
 
         envio.setEstado(nuevoEstado);
-        return repo.save(envio);
+        Envio actualizado = repo.save(envio);
+
+        // Publica el evento de forma asincrona hacia RabbitMQ para que el
+        // consumidor genere la notificacion correspondiente al cliente.
+        envioEventProducer.publicarEnvioActualizado(actualizado.getId(), actualizado.getEstado().name());
+
+        return actualizado;
     }
 
     public Envio actualizar(Long id, Envio nuevo) {
