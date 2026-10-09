@@ -1,5 +1,6 @@
 package com.smartlogix.rabbitadmin.controller;
 
+import com.smartlogix.rabbitadmin.dto.ActualizarExchangeRequest;
 import com.smartlogix.rabbitadmin.dto.CrearExchangeRequest;
 import com.smartlogix.rabbitadmin.service.RabbitAdminService;
 import jakarta.validation.Valid;
@@ -28,9 +29,17 @@ public class ExchangeController {
         ));
     }
 
+    @PutMapping("/{nombre}")
+    public ResponseEntity<Map<String, Object>> actualizar(@PathVariable String nombre,
+                                                          @Valid @RequestBody ActualizarExchangeRequest request,
+                                                          @RequestParam(defaultValue = "false") boolean force) {
+        return ResponseEntity.ok(rabbitAdminService.actualizarExchange(nombre, request, force));
+    }
+
     @DeleteMapping("/{nombre}")
-    public ResponseEntity<Map<String, String>> eliminar(@PathVariable String nombre) {
-        rabbitAdminService.eliminarExchange(nombre);
+    public ResponseEntity<Map<String, String>> eliminar(@PathVariable String nombre,
+                                                        @RequestParam(defaultValue = "false") boolean force) {
+        rabbitAdminService.eliminarExchange(nombre, force);
         return ResponseEntity.ok(Map.of("status", "eliminado", "nombre", nombre));
     }
 }

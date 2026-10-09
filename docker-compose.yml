@@ -168,6 +168,7 @@ services:
       - pedidos
       - envios
       - usuarios
+      - rabbitadmin
 
   frontend:
     build: ./frontend
@@ -242,6 +243,7 @@ services:
       - "8095:8095"
     environment:
       RABBITMQ_ADDRESSES: rabbitmq1:5672,rabbitmq2:5672
+      RABBITMQ_MGMT_URLS: http://rabbitmq1:15672,http://rabbitmq2:15672
       EUREKA_URL: http://eureka-server:8761/eureka
     depends_on:
       - rabbitmq1

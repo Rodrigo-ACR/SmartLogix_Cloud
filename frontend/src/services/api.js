@@ -55,3 +55,55 @@ export async function cambiarEstadoEnvio(id, estado) { return fetchJSON(`${BASE_
 
 export async function getUsuarios() { return fetchJSON(`${BASE_URL}/api/productos/usuarios`, { headers: getHeaders() }); }
 export async function actualizarUsuario(id, data) { return fetchJSON(`${BASE_URL}/api/productos/usuarios/${id}`, { method:"PUT", headers:getHeaders(), body:JSON.stringify(data) }); }
+
+// =====================================================================
+// RABBITMQ (EP2) - todo pasa por el BFF (/api/rabbit) con el token JWT.
+// El BFF reenvia al microservicio rabbitadmin; el front nunca le habla directo.
+// =====================================================================
+async function rabbitFetch(path, options = {}) {
+    const res = await fetch(`${BASE_URL}/api/rabbit${path}`, { ...options, headers: getHeaders() });
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+    if (!res.ok) {
+        let msg = data && data.mensaje;
+        // Errores de validacion de rabbitadmin: { campo: "mensaje", ... }
+        if (!msg && data && typeof data === "object") msg = Object.values(data).join(" | ");
+        throw new Error(msg || `HTTP ${res.status}`);
+    }
+    return data;
+}
+
+const enc = (nombre) => encodeURIComponent(nombre);
+const conForce = (force) => (force ? "?force=true" : "");
+
+export const rabbitOverview = () => rabbitFetch("/overview");
+
+export const rabbitCrearCola = (data) =>
+    rabbitFetch("/queues", { method: "POST", body: JSON.stringify(data) });
+export const rabbitActualizarCola = (nombre, data, force = false) =>
+    rabbitFetch(`/queues/${enc(nombre)}${conForce(force)}`, { method: "PUT", body: JSON.stringify(data) });
+export const rabbitEliminarCola = (nombre, force = false) =>
+    rabbitFetch(`/queues/${enc(nombre)}${conForce(force)}`, { method: "DELETE" });
+export const rabbitPurgarCola = (nombre) =>
+    rabbitFetch(`/queues/${enc(nombre)}/mensajes`, { method: "DELETE" });
+export const rabbitVerMensajes = (nombre, cantidad = 5) =>
+    rabbitFetch(`/queues/${enc(nombre)}/mensajes?cantidad=${cantidad}`);
+
+export const rabbitCrearExchange = (data) =>
+    rabbitFetch("/exchanges", { method: "POST", body: JSON.stringify(data) });
+export const rabbitActualizarExchange = (nombre, data, force = false) =>
+    rabbitFetch(`/exchanges/${enc(nombre)}${conForce(force)}`, { method: "PUT", body: JSON.stringify(data) });
+export const rabbitEliminarExchange = (nombre, force = false) =>
+    rabbitFetch(`/exchanges/${enc(nombre)}${conForce(force)}`, { method: "DELETE" });
+
+export const rabbitCrearBinding = (data) =>
+    rabbitFetch("/bindings", { method: "POST", body: JSON.stringify(data) });
+export const rabbitActualizarBinding = (data, force = false) =>
+    rabbitFetch(`/bindings${conForce(force)}`, { method: "PUT", body: JSON.stringify(data) });
+export const rabbitEliminarBinding = ({ exchange, cola, routingKey }, force = false) =>
+    rabbitFetch(`/bindings?exchange=${enc(exchange)}&cola=${enc(cola)}&routingKey=${enc(routingKey || "")}${force ? "&force=true" : ""}`,
+        { method: "DELETE" });
+
+export const rabbitPublicar = (data) =>
+    rabbitFetch("/publish", { method: "POST", body: JSON.stringify(data) });
