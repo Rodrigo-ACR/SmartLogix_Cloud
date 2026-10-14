@@ -8,20 +8,14 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
 import javax.crypto.spec.SecretKeySpec;
 
-/**
- * JwtDecoder compuesto: acepta tokens de Azure AD (Tenant SmartLogix) Y
- * tokens locales emitidos por el propio BFF para clientes registrados
- * con correo/contraseña.
- */
 @Configuration
 public class JwtDecoderConfig {
 
-    // Clave local del sistema (misma que usa el AuthService para firmar tokens locales)
     private static final String LOCAL_SECRET = "12345678901234567890123456789012";
 
-    // JWKS del Tenant SmartLogix
+    // JWKS del nuevo tenant Evaluación SmartLogix
     private static final String AZURE_JWKS_URI =
-        "https://login.microsoftonline.com/275bee47-23c3-4b55-87a5-37dc048751cb/discovery/keys";
+        "https://login.microsoftonline.com/99383baf-0e02-4567-b639-98d2b555a85d/discovery/keys";
 
     @Bean
     public JwtDecoder jwtDecoder() {
