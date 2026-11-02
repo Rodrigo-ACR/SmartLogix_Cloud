@@ -3,6 +3,7 @@ package com.smartlogix.envios.service;
 import com.smartlogix.envios.model.Envio;
 import com.smartlogix.envios.model.EstadoEnvio;
 import com.smartlogix.envios.repository.EnvioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -37,6 +38,14 @@ public class EnvioService {
     public EnvioService(EnvioRepository repo, EnvioEventProducer envioEventProducer) {
         this.repo = repo;
         this.envioEventProducer = envioEventProducer;
+    }
+
+    // Productor Kafka (EV3): opcional para no romper los tests unitarios con @InjectMocks
+    private EnvioKafkaProducer kafkaProducer;
+
+    @Autowired(required = false)
+    public void setKafkaProducer(EnvioKafkaProducer kafkaProducer) {
+        this.kafkaProducer = kafkaProducer;
     }
 
     public List<Envio> listarTodos() {
@@ -86,6 +95,11 @@ public class EnvioService {
         // Publica el evento de forma asincrona hacia RabbitMQ para que el
         // consumidor genere la notificacion correspondiente al cliente.
         envioEventProducer.publicarEnvioActualizado(actualizado.getId(), actualizado.getEstado().name());
+
+        // Evento de streaming hacia Kafka con la transicion de estado del envio
+        if (kafkaProducer != null) {
+            kafkaProducer.publicarEstadoCambiado(actualizado, actual);
+        }
 
         return actualizado;
     }

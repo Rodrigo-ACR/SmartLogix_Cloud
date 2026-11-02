@@ -3,6 +3,7 @@ package com.smartlogix.pedidos.service;
 import com.smartlogix.pedidos.model.EstadoPedido;
 import com.smartlogix.pedidos.model.Pedido;
 import com.smartlogix.pedidos.repository.PedidoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -39,6 +40,15 @@ public class PedidoService {
         this.pedidoEventProducer = pedidoEventProducer;
     }
 
+    // Productor Kafka (EV3): opcional para no romper los tests unitarios que construyen
+    // el servicio solo con el repositorio y el productor Rabbit.
+    private PedidoKafkaProducer kafkaProducer;
+
+    @Autowired(required = false)
+    public void setKafkaProducer(PedidoKafkaProducer kafkaProducer) {
+        this.kafkaProducer = kafkaProducer;
+    }
+
     public List<Pedido> listarTodos() {
         return repo.findAll();
     }
@@ -72,6 +82,11 @@ public class PedidoService {
         pedidoEventProducer.publicarPedidoCreado(
                 guardado.getId(), guardado.getCliente(), (double) guardado.getCantidad());
 
+        // Evento de streaming hacia Kafka (Inventario y Envios reaccionan a el)
+        if (kafkaProducer != null) {
+            kafkaProducer.publicarPedidoCreado(guardado);
+        }
+
         return guardado;
     }
 
@@ -91,7 +106,13 @@ public class PedidoService {
         }
 
         pedido.setEstado(nuevoEstado);
-        return repo.save(pedido);
+        Pedido actualizado = repo.save(pedido);
+
+        // Evento de streaming hacia Kafka con la transicion de estado
+        if (kafkaProducer != null && actualizado != null) {
+            kafkaProducer.publicarEstadoCambiado(actualizado, actual);
+        }
+        return actualizado;
     }
 
     public Pedido actualizar(Long id, Pedido nuevo) {

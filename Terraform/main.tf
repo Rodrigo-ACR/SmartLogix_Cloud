@@ -44,7 +44,7 @@ resource "local_file" "guardar_clave" {
 resource "aws_vpc" "vpc_smartlogix" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
-  tags = { Name = "vpc-smartlogix" }
+  tags                 = { Name = "vpc-smartlogix" }
 }
 
 resource "aws_internet_gateway" "igw" {
@@ -57,7 +57,7 @@ resource "aws_subnet" "subred_publica" {
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
-  tags = { Name = "subred-publica-smartlogix" }
+  tags                    = { Name = "subred-publica-smartlogix" }
 }
 
 resource "aws_route_table" "rt_publica" {
@@ -145,6 +145,41 @@ resource "aws_security_group" "sg_smartlogix" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "RabbitMQ Management UI"
+    from_port   = 15672
+    to_port     = 15672
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "RabbitAdmin microservicio"
+    from_port   = 8095
+    to_port     = 8095
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Kafka UI (login con usuario/clave)"
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "KafkaAdmin microservicio"
+    from_port   = 8096
+    to_port     = 8096
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Los brokers de Kafka (9092 interno, 19092-19094 externo) y Zookeeper (2181)
+  # NO se exponen: solo se comunican dentro de la red de Docker.
+
   tags = { Name = "sg-smartlogix" }
 }
 
@@ -153,13 +188,13 @@ resource "aws_security_group" "sg_smartlogix" {
 # ══════════════════════════════════════════════════════
 resource "aws_instance" "ec2_smartlogix" {
   ami                    = "ami-00e801948462f718a"
-  instance_type          = "t3.micro"
+  instance_type          = var.instance_type
   subnet_id              = aws_subnet.subred_publica.id
   vpc_security_group_ids = [aws_security_group.sg_smartlogix.id]
   key_name               = aws_key_pair.key_pair.key_name
 
   root_block_device {
-    volume_size = 20
+    volume_size = var.root_volume_size
     volume_type = "gp3"
   }
 
@@ -176,8 +211,8 @@ resource "aws_instance" "ec2_smartlogix" {
       -o /usr/local/lib/docker/cli-plugins/docker-compose
     chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
-    # Swap 2GB — evita quedarse sin memoria en t3.micro con todos los contenedores
-    dd if=/dev/zero of=/swapfile bs=128M count=16
+    # Swap 4GB — red de seguridad de memoria con Kafka (3 ZK + 3 brokers) + Rabbit + microservicios
+    dd if=/dev/zero of=/swapfile bs=128M count=32
     chmod 600 /swapfile
     mkswap /swapfile
     swapon /swapfile
@@ -211,11 +246,11 @@ resource "aws_apigatewayv2_api" "smartlogix_api" {
   description   = "API Gateway SmartLogix - valida JWT de Azure AD (Tenant SmartLogix)"
 
   cors_configuration {
-    allow_origins     = ["*"]
-    allow_methods      = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-    allow_headers      = ["Authorization", "Content-Type", "ngrok-skip-browser-warning"]
-    expose_headers     = ["Authorization"]
-    max_age            = 300
+    allow_origins  = ["https://100.51.163.7", "http://100.51.163.7:5173"]
+    allow_methods  = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    allow_headers  = ["Authorization", "Content-Type", "ngrok-skip-browser-warning"]
+    expose_headers = ["Authorization"]
+    max_age        = 300
   }
 }
 
@@ -237,8 +272,8 @@ resource "aws_apigatewayv2_integration" "bff_integration" {
   integration_method     = "ANY"
   integration_uri        = "http://${aws_eip.eip_smartlogix.public_ip}:8085/{proxy}"
   payload_format_version = "1.0"
-  connection_type         = "INTERNET"
-  timeout_milliseconds    = 29000
+  connection_type        = "INTERNET"
+  timeout_milliseconds   = 29000
 
   depends_on = [aws_eip.eip_smartlogix]
 }
@@ -299,4 +334,14 @@ output "api_gateway_url" {
 
 output "api_gateway_id" {
   value = aws_apigatewayv2_api.smartlogix_api.id
+}
+
+output "kafka_ui_url" {
+  value       = "http://${aws_eip.eip_smartlogix.public_ip}:8081"
+  description = "Kafka UI (login por defecto admin / smartlogix)"
+}
+
+output "kafkaadmin_url" {
+  value       = "http://${aws_eip.eip_smartlogix.public_ip}:8096/swagger-ui.html"
+  description = "Swagger del microservicio administrador de Kafka"
 }

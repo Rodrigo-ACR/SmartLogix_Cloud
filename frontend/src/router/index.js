@@ -14,6 +14,7 @@ import AdminClientes from "../views/admin/ClientesView.vue";
 import NotFoundView  from "../views/NotFoundView.vue";
 import Ep1DemoView   from "../views/Ep1DemoView.vue";
 import Ep2RabbitView from "../views/Ep2RabbitView.vue";
+import Ep3KafkaView  from "../views/Ep3KafkaView.vue";
 
 const routes = [
     { path: "/", redirect: "/login" },
@@ -24,6 +25,9 @@ const routes = [
 
     // EP2 Demo (RabbitMQ)
     { path: "/ep2-rabbit", component: Ep2RabbitView, meta: { requiresAuth: true, rol: "ADMIN" } },
+
+    // EP3 Demo (Kafka)
+    { path: "/ep3-kafka", component: Ep3KafkaView, meta: { requiresAuth: true, rol: "ADMIN" } },
 
     // CLIENTE
     { path: "/inicio",        component: InicioView,     meta: { requiresAuth: true, rol: "CLIENTE" } },

@@ -107,3 +107,37 @@ export const rabbitEliminarBinding = ({ exchange, cola, routingKey }, force = fa
 
 export const rabbitPublicar = (data) =>
     rabbitFetch("/publish", { method: "POST", body: JSON.stringify(data) });
+
+// =====================================================================
+// KAFKA (EP3) - todo pasa por el BFF (/api/kafka) con el token JWT.
+// El BFF reenvia al microservicio kafkaadmin; el front nunca le habla directo.
+// =====================================================================
+async function kafkaFetch(path, options = {}) {
+    const res = await fetch(`${BASE_URL}/api/kafka${path}`, { ...options, headers: getHeaders() });
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+    if (!res.ok) {
+        let msg = data && data.mensaje;
+        if (!msg && data && typeof data === "object") msg = Object.values(data).join(" | ");
+        throw new Error(msg || `HTTP ${res.status}`);
+    }
+    return data;
+}
+
+export const kafkaOverview = () => kafkaFetch("/overview");
+export const kafkaTopico = (nombre) => kafkaFetch(`/topics/${enc(nombre)}`);
+export const kafkaCrearTopico = (data) =>
+    kafkaFetch("/topics", { method: "POST", body: JSON.stringify(data) });
+export const kafkaActualizarConfig = (nombre, configs, force = false) =>
+    kafkaFetch(`/topics/${enc(nombre)}/config${conForce(force)}`, { method: "PUT", body: JSON.stringify({ configs }) });
+export const kafkaAumentarParticiones = (nombre, total, force = false) =>
+    kafkaFetch(`/topics/${enc(nombre)}/particiones${conForce(force)}`, { method: "PUT", body: JSON.stringify({ total }) });
+export const kafkaEliminarTopico = (nombre, force = false) =>
+    kafkaFetch(`/topics/${enc(nombre)}${conForce(force)}`, { method: "DELETE" });
+export const kafkaVerMensajes = (nombre, cantidad = 5) =>
+    kafkaFetch(`/topics/${enc(nombre)}/mensajes?cantidad=${cantidad}`);
+export const kafkaPublicar = (nombre, data) =>
+    kafkaFetch(`/topics/${enc(nombre)}/mensajes`, { method: "POST", body: JSON.stringify(data) });
+export const kafkaGrupo = (grupo) => kafkaFetch(`/groups/${enc(grupo)}`);
+export const kafkaEliminarGrupo = (grupo) => kafkaFetch(`/groups/${enc(grupo)}`, { method: "DELETE" });

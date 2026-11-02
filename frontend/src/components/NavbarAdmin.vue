@@ -12,6 +12,7 @@
                 <router-link to="/admin/clientes">Clientes</router-link>
                 <router-link to="/ep1-demo" class="ep1-link">🎓 Demo EP1</router-link>
                 <router-link to="/ep2-rabbit" class="ep1-link">🐇 Demo EP2</router-link>
+                <router-link to="/ep3-kafka" class="ep1-link">🌊 Demo EP3</router-link>
             </div>
             <div class="navbar-user">
                 <span class="toggle-desktop"><ThemeToggle /></span>
@@ -32,6 +33,7 @@
             <router-link to="/admin/clientes"  @click="menuAbierto = false">👥 Clientes</router-link>
             <router-link to="/ep1-demo"        @click="menuAbierto = false">🎓 Demo EP1</router-link>
             <router-link to="/ep2-rabbit"      @click="menuAbierto = false">🐇 Demo EP2</router-link>
+            <router-link to="/ep3-kafka"       @click="menuAbierto = false">🌊 Demo EP3</router-link>
             <div class="mobile-footer">
                 <div class="mobile-footer-row">
                     <ThemeToggle />

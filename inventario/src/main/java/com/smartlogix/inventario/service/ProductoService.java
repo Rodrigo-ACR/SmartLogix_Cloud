@@ -2,6 +2,7 @@ package com.smartlogix.inventario.service;
 
 import com.smartlogix.inventario.model.Producto;
 import com.smartlogix.inventario.repository.ProductoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +20,14 @@ public class ProductoService {
     public ProductoService(ProductoRepository repo, StockEventProducer stockEventProducer) {
         this.repo = repo;
         this.stockEventProducer = stockEventProducer;
+    }
+
+    // Productor Kafka (EV3): opcional para no romper los tests unitarios con @InjectMocks
+    private InventarioKafkaProducer kafkaProducer;
+
+    @Autowired(required = false)
+    public void setKafkaProducer(InventarioKafkaProducer kafkaProducer) {
+        this.kafkaProducer = kafkaProducer;
     }
 
     public List<Producto> listarTodos() {
@@ -107,6 +116,10 @@ public class ProductoService {
         // se difunde a todos los suscriptores interesados en esta alerta).
         if (p.getStock() < UMBRAL_STOCK_MINIMO) {
             stockEventProducer.publicarStockBajo(p.getId(), p.getNombre(), p.getStock());
+            // Misma alerta como evento de streaming en Kafka
+            if (kafkaProducer != null) {
+                kafkaProducer.publicarStockBajo(p.getId(), p.getNombre(), p.getStock(), UMBRAL_STOCK_MINIMO);
+            }
         }
     }
 }
