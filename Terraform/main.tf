@@ -266,7 +266,8 @@ resource "aws_apigatewayv2_authorizer" "azuread_jwt" {
       "2b5921ae-eb94-4deb-aea5-38abef3d7cec",
       "api://2b5921ae-eb94-4deb-aea5-38abef3d7cec"
     ]
-    issuer   = "https://login.microsoftonline.com/99383baf-0e02-4567-b639-98d2b555a85d/v2.0"
+    # El token que emite MSAL en este tenant es v1.0: su "iss" es sts.windows.net
+    issuer   = "https://sts.windows.net/99383baf-0e02-4567-b639-98d2b555a85d/"
   }
 }
 
