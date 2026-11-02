@@ -565,7 +565,8 @@ let temporizador = null;
 let bannerTimer = null;
 let ultimoErrorLog = '';
 
-const kafkaUiUrl = `${window.location.protocol}//${window.location.hostname}:8081`;
+// Kafka UI responde solo por HTTP (puerto 8081), aunque la app se abra por HTTPS
+const kafkaUiUrl = `http://${window.location.hostname}:8081`;
 
 // ---------------------------------------------------------------------
 // Datos derivados
