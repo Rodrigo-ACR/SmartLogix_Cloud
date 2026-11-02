@@ -3,6 +3,8 @@ package com.smartlogix.usuarios.integration;
 import com.smartlogix.usuarios.repository.UsuarioRepository;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.smartlogix.usuarios.service.UsuarioEventProducer;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UsuarioIntegrationTest {
+
+  // RabbitMQ no existe en los tests: el productor se reemplaza por un mock
+  @MockitoBean
+  private UsuarioEventProducer usuarioEventProducer;
 
     @Autowired
     private MockMvc mockMvc;

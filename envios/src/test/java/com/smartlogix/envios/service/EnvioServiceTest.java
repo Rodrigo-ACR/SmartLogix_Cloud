@@ -23,6 +23,9 @@ class EnvioServiceTest {
     @Mock
     private EnvioRepository repo;
 
+    @Mock
+    private EnvioEventProducer envioEventProducer;
+
     @InjectMocks
     private EnvioService service;
 

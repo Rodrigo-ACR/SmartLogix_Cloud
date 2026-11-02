@@ -3,6 +3,8 @@ package com.smartlogix.envios.integration;
 import com.smartlogix.envios.repository.EnvioRepository;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.smartlogix.envios.service.EnvioEventProducer;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class EnvioIntegrationTest {
+
+  // RabbitMQ no existe en los tests: el productor se reemplaza por un mock
+  @MockitoBean
+  private EnvioEventProducer envioEventProducer;
 
   @Autowired
   private MockMvc mockMvc;

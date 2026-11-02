@@ -3,6 +3,8 @@ package com.smartlogix.pedidos.integration;
 import com.smartlogix.pedidos.repository.PedidoRepository;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.smartlogix.pedidos.service.PedidoEventProducer;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class PedidoIntegrationTest {
+
+  // RabbitMQ no existe en los tests: el productor se reemplaza por un mock
+  @MockitoBean
+  private PedidoEventProducer pedidoEventProducer;
 
     @Autowired
     private MockMvc mvc;

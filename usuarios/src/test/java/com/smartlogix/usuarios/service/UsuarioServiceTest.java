@@ -24,6 +24,9 @@ class UsuarioServiceTest {
     @Mock
     private UsuarioRepository repo;
 
+    @Mock
+    private UsuarioEventProducer usuarioEventProducer;
+
     @InjectMocks
     private UsuarioService service;
 

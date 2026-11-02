@@ -35,6 +35,9 @@ class PedidoTransicionEstadoTest {
     @Mock
     private PedidoRepository repo;
 
+    @Mock
+    private PedidoEventProducer pedidoEventProducer;
+
     @InjectMocks
     private PedidoService service;
 
