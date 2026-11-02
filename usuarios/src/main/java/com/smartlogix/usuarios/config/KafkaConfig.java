@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.smartlogix.usuarios.dto.LogisticaEventoDTO;
+import com.smartlogix.usuarios.service.KafkaBanner;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.TopicPartition;
@@ -25,6 +26,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.listener.ConsumerRecordRecoverer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
@@ -153,8 +155,18 @@ public class KafkaConfig {
     // ------------------------------------------------------------------
     @Bean
     public DefaultErrorHandler kafkaErrorHandler(KafkaTemplate<String, Object> kafkaTemplate) {
-        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
+        DeadLetterPublishingRecoverer publicadorDlt = new DeadLetterPublishingRecoverer(kafkaTemplate,
                 (record, ex) -> new TopicPartition(record.topic() + DLT_SUFFIX, -1)); // -1 = Kafka elige la particion
+
+        // Antes de mandar el mensaje al DLT se deja registrado en el log (requisito de la pauta)
+        ConsumerRecordRecoverer recoverer = (record, ex) -> {
+            Throwable causa = ex.getCause() != null ? ex.getCause() : ex;
+            log.error(KafkaBanner.recuadro(
+                    "MENSAJE NO PROCESADO -> " + record.topic() + DLT_SUFFIX,
+                    "clave: " + record.key() + " | particion " + record.partition() + " | offset " + record.offset(),
+                    "causa: " + causa.getMessage()));
+            publicadorDlt.accept(record, ex);
+        };
 
         ExponentialBackOffWithMaxRetries backOff = new ExponentialBackOffWithMaxRetries(retryMaxAttempts);
         backOff.setInitialInterval(1000L);
@@ -163,9 +175,10 @@ public class KafkaConfig {
 
         DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
         handler.addNotRetryableExceptions(IllegalArgumentException.class);
-        handler.setRetryListeners((record, ex, deliveryAttempt) -> log.warn(
-                "[KAFKA][RETRY] intento {} fallido topic={} particion={} offset={} causa={}",
-                deliveryAttempt, record.topic(), record.partition(), record.offset(), ex.getMessage()));
+        handler.setRetryListeners((record, ex, deliveryAttempt) -> log.warn(KafkaBanner.recuadro(
+                "REINTENTO " + deliveryAttempt + " fallido -> " + record.topic(),
+                "clave: " + record.key() + " | particion " + record.partition() + " | offset " + record.offset(),
+                "causa: " + ex.getMessage())));
         return handler;
     }
 

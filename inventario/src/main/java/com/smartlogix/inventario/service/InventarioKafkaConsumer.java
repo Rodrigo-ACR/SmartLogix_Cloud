@@ -30,8 +30,11 @@ public class InventarioKafkaConsumer {
     public void onEventoPedido(ConsumerRecord<String, PedidoEventoDTO> record) {
         PedidoEventoDTO evento = record.value();
         validar(evento);
-        log.info("[KAFKA][INVENTARIO] <- {} pedidoId={} estadoNuevo={} particion={} offset={}",
-                evento.tipo(), evento.pedidoId(), evento.estadoNuevo(), record.partition(), record.offset());
+        log.info(KafkaBanner.recuadro(
+                "Pedido " + evento.pedidoId(),
+                "INVENTARIO recibio " + evento.tipo(),
+                "cliente: " + evento.cliente() + " | estado: " + evento.estadoAnterior() + " -> " + evento.estadoNuevo(),
+                KafkaConfig.TOPIC_PEDIDOS + " | particion " + record.partition() + " | offset " + record.offset()));
         reposicionStockService.procesar(evento);
     }
 

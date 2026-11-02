@@ -30,8 +30,14 @@ public class UsuarioKafkaConsumer {
     public void onEventoLogistico(ConsumerRecord<String, LogisticaEventoDTO> record) {
         LogisticaEventoDTO evento = record.value();
         validar(evento);
-        log.info("[KAFKA][USUARIOS] <- {} key={} particion={} offset={}",
-                evento.tipo(), record.key(), record.partition(), record.offset());
+        log.info(KafkaBanner.recuadro(
+                evento.tipo() == LogisticaEventoDTO.Tipo.STOCK_BAJO
+                        ? "Producto " + evento.productoId() + " (" + evento.nombreProducto() + ")"
+                        : "Envio " + evento.envioId(),
+                "USUARIOS recibio " + evento.tipo(),
+                evento.tipo() == LogisticaEventoDTO.Tipo.STOCK_BAJO
+                        ? "stock: " + evento.stockActual() + " | umbral: " + evento.umbral() : "estado: " + evento.estado(),
+                KafkaConfig.TOPIC_LOGISTICA + " | particion " + record.partition() + " | offset " + record.offset()));
         notificacionAdminService.procesar(evento);
     }
 

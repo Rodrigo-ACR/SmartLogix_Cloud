@@ -59,10 +59,11 @@ public class EnvioKafkaProducer {
                             log.error("[KAFKA][ENVIOS] No se pudo publicar {} envioId={}: {}",
                                     evento.tipo(), evento.envioId(), error.getMessage());
                         } else {
-                            log.info("[KAFKA][ENVIOS] Publicado {} envioId={} estado={} -> particion={} offset={}",
-                                    evento.tipo(), evento.envioId(), evento.estado(),
-                                    resultado.getRecordMetadata().partition(),
-                                    resultado.getRecordMetadata().offset());
+                            log.info(KafkaBanner.recuadro(
+                                    "Envio " + evento.envioId() + " (pedido " + evento.pedidoId() + ")",
+                                    "ENVIOS publico " + evento.tipo() + " (estado: " + evento.estado() + ")",
+                                    KafkaConfig.TOPIC_LOGISTICA + " | particion " + resultado.getRecordMetadata().partition()
+                                            + " | offset " + resultado.getRecordMetadata().offset()));
                         }
                     });
         } catch (Exception ex) {

@@ -33,8 +33,11 @@ public class PedidoKafkaConsumer {
     public void onEventoLogistico(ConsumerRecord<String, LogisticaEventoDTO> record) {
         LogisticaEventoDTO evento = record.value();
         validar(evento);
-        log.info("[KAFKA][PEDIDOS] <- {} key={} particion={} offset={}",
-                evento.tipo(), record.key(), record.partition(), record.offset());
+        log.info(KafkaBanner.recuadro(
+                evento.pedidoId() != null ? "Pedido " + evento.pedidoId() : "Producto " + evento.productoId(),
+                "PEDIDOS recibio " + evento.tipo() + (evento.estado() != null ? " (estado: " + evento.estado() + ")" : ""),
+                evento.envioId() != null ? "envio: " + evento.envioId() : null,
+                KafkaConfig.TOPIC_LOGISTICA + " | particion " + record.partition() + " | offset " + record.offset()));
         seguimiento.registrar(evento);
     }
 

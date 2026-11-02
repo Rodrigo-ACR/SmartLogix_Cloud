@@ -44,10 +44,11 @@ public class InventarioKafkaProducer {
                             log.error("[KAFKA][INVENTARIO] No se pudo publicar STOCK_BAJO productoId={}: {}",
                                     productoId, error.getMessage());
                         } else {
-                            log.info("[KAFKA][INVENTARIO] Publicado STOCK_BAJO productoId={} stock={} -> particion={} offset={}",
-                                    productoId, stockActual,
-                                    resultado.getRecordMetadata().partition(),
-                                    resultado.getRecordMetadata().offset());
+                            log.info(KafkaBanner.recuadro(
+                                    "Producto " + productoId + " (" + nombreProducto + ")",
+                                    "INVENTARIO publico STOCK_BAJO | stock: " + stockActual + " | umbral: " + umbral,
+                                    KafkaConfig.TOPIC_LOGISTICA + " | particion " + resultado.getRecordMetadata().partition()
+                                            + " | offset " + resultado.getRecordMetadata().offset()));
                         }
                     });
         } catch (Exception e) {

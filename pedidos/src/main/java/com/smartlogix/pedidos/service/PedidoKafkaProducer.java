@@ -66,10 +66,11 @@ public class PedidoKafkaProducer {
                             log.error("[KAFKA][PEDIDOS] No se pudo publicar {} pedidoId={}: {}",
                                     evento.tipo(), evento.pedidoId(), error.getMessage());
                         } else {
-                            log.info("[KAFKA][PEDIDOS] Publicado {} pedidoId={} -> particion={} offset={}",
-                                    evento.tipo(), evento.pedidoId(),
-                                    resultado.getRecordMetadata().partition(),
-                                    resultado.getRecordMetadata().offset());
+                            log.info(KafkaBanner.recuadro(
+                                    "Pedido " + evento.pedidoId(),
+                                    "PEDIDOS publico " + evento.tipo() + " (estado: " + evento.estadoNuevo() + ")",
+                                    KafkaConfig.TOPIC_PEDIDOS + " | particion " + resultado.getRecordMetadata().partition()
+                                            + " | offset " + resultado.getRecordMetadata().offset()));
                         }
                     });
         } catch (Exception e) {
