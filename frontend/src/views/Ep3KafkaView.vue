@@ -92,7 +92,7 @@
                         </div>
                         <div class="req-body">
                             <div class="ms-row" v-for="g in flujoGrupos" :key="g.grupo">
-                                <span class="ms-dot" :class="g.detalle && g.detalle.estado === 'STABLE' ? 'dot-ok' : 'dot-err'"></span>
+                                <span class="ms-dot" :class="g.detalle && esStable(g.detalle.estado) ? 'dot-ok' : 'dot-err'"></span>
                                 <span class="ms-nombre">{{ g.icono }} {{ g.ms }} <small class="dim">{{ g.grupo }}</small></span>
                                 <span class="ms-count">{{ g.detalle ? g.detalle.totalMiembros : 0 }} miembro(s) · lag {{ g.detalle ? g.detalle.lagTotal : '—' }}</span>
                             </div>
@@ -247,6 +247,46 @@
                 </div>
             </div>
 
+
+            <!-- TEST DE CARGA -->
+            <div class="card section">
+                <div class="sec-head">
+                    <div>
+                        <h3>2b · Test de carga: ráfaga de mensajes</h3>
+                        <p>Publica N eventos en el tópico <code>demo.carga</code> (3 particiones, 3 réplicas; se crea solo) y muestra cómo Kafka los reparte entre las particiones.</p>
+                    </div>
+                </div>
+                <div class="test-grid">
+                    <div class="form-card">
+                        <h4>Ráfaga</h4>
+                        <div class="input-group">
+                            <label>Cantidad de mensajes</label>
+                            <select v-model.number="carga.cantidad" :disabled="carga.corriendo">
+                                <option :value="100">100</option>
+                                <option :value="500">500</option>
+                                <option :value="1000">1000</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" @click="testCarga" :disabled="carga.corriendo || ocupado">
+                            {{ carga.corriendo ? '⏳ Publicando ' + carga.hecho + ' / ' + carga.cantidad : '🚀 Lanzar test de carga' }}
+                        </button>
+                        <p class="hint">Claves <code>CARGA-1</code> … <code>CARGA-N</code>: la clave decide la partición. No toca los tópicos de negocio.</p>
+                    </div>
+                    <div class="form-card">
+                        <h4>Resultado</h4>
+                        <template v-if="carga.resultado">
+                            <div class="ir"><span>✅ Enviados</span><strong>{{ carga.ok }} de {{ carga.cantidad }} <span v-if="carga.errores" class="text-err">({{ carga.errores }} con error)</span></strong></div>
+                            <div class="ir"><span>⏱️ Tiempo</span><strong>{{ carga.ms }} ms</strong></div>
+                            <div class="ir"><span>⚡ Velocidad</span><strong>{{ carga.porSeg }} mensajes/s</strong></div>
+                            <div class="ir" v-for="(n, part) in carga.porParticion" :key="part">
+                                <span>🧱 Partición {{ part }}</span><strong>{{ n }} mensajes</strong>
+                            </div>
+                        </template>
+                        <p class="hint" v-else>Lanza el test para ver el reparto por partición.</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- VISOR DE MENSAJES -->
             <div class="card section">
                 <div class="sec-head">
@@ -324,6 +364,15 @@
                         <div class="input-group">
                             <label>Retención (ms)</label>
                             <input v-model="fTopico.retencion" placeholder="604800000 (7 días)" />
+                        <table class="guia-ms">
+                            <thead><tr><th>Tiempo</th><th>Milisegundos</th><th></th></tr></thead>
+                            <tbody>
+                                <tr v-for="r in RETENCIONES" :key="r.ms">
+                                    <td>{{ r.etiqueta }}</td><td><code>{{ r.ms }}</code></td>
+                                    <td><button type="button" class="btn-usar" @click="fTopico.retencion = r.ms">usar</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
                         </div>
                         <div class="input-group">
                             <label>Política de limpieza</label>
@@ -374,7 +423,7 @@
                             <tbody>
                                 <tr v-for="g in gruposTabla" :key="g.grupo">
                                     <td><strong>{{ g.grupo }}</strong></td>
-                                    <td><span :class="g.estado === 'STABLE' ? 'text-ok' : 'text-err'">{{ g.estado }}</span></td>
+                                    <td><span :class="esStable(g.estado) ? 'text-ok' : 'text-err'">{{ g.estado }}</span></td>
                                     <td>{{ g.miembros }}</td>
                                     <td>{{ g.lag }}</td>
                                     <td>
@@ -444,6 +493,15 @@
                 <div class="input-group">
                     <label>Retención (ms)</label>
                     <input v-model="edit.retencion" />
+                        <table class="guia-ms">
+                            <thead><tr><th>Tiempo</th><th>Milisegundos</th><th></th></tr></thead>
+                            <tbody>
+                                <tr v-for="r in RETENCIONES" :key="r.ms">
+                                    <td>{{ r.etiqueta }}</td><td><code>{{ r.ms }}</code></td>
+                                    <td><button type="button" class="btn-usar" @click="edit.retencion = r.ms">usar</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
                 </div>
                 <div class="input-group">
                     <label>Política de limpieza</label>
@@ -529,6 +587,15 @@ const PRUEBAS = [
 ];
 const INVALIDO = 'esto-no-es-un-json-valido';
 
+// Guía para escribir retention.ms
+const RETENCIONES = [
+    { etiqueta: '10 minutos', ms: '600000' },
+    { etiqueta: '1 hora', ms: '3600000' },
+    { etiqueta: '1 día', ms: '86400000' },
+    { etiqueta: '7 días', ms: '604800000' },
+    { etiqueta: '30 días', ms: '2592000000' }
+];
+
 const GRUPOS_CONOCIDOS = [
     { grupo: 'inventario-pedidos-grp', ms: 'Inventario', icono: '📦' },
     { grupo: 'envios-pedidos-grp', ms: 'Envíos', icono: '🚚' },
@@ -581,7 +648,7 @@ const topicosOk = computed(() =>
 const mensajesDlt = ref(0);
 
 const flujoGrupos = computed(() => GRUPOS_CONOCIDOS.map(g => ({ ...g, detalle: overview.detalles[g.grupo] })));
-const gruposOk = computed(() => flujoGrupos.value.every(g => g.detalle && g.detalle.estado === 'STABLE' && g.detalle.totalMiembros > 0));
+const gruposOk = computed(() => flujoGrupos.value.every(g => g.detalle && esStable(g.detalle.estado) && g.detalle.totalMiembros > 0));
 
 const gruposTabla = computed(() => overview.grupos.map(g => {
     const d = overview.detalles[g.grupo];
@@ -603,6 +670,7 @@ function lagGrupo(grupo) {
 // ---------------------------------------------------------------------
 // Utilidades
 // ---------------------------------------------------------------------
+const esStable = (e) => String(e || '').toUpperCase() === 'STABLE';
 const esperar = (ms) => new Promise(r => setTimeout(r, ms));
 
 function addLog(type, icon, msg) {
@@ -725,6 +793,58 @@ async function publicar() {
     visor.topico = pub.topico;
     await esperar(1500);
     await abrirMensajes(pub.topico, true);
+    await cargar(true, true);
+}
+
+
+// ---------------------------------------------------------------------
+// Test de carga: N mensajes en demo.carga
+// ---------------------------------------------------------------------
+const T_CARGA = 'demo.carga';
+const carga = reactive({ cantidad: 1000, corriendo: false, hecho: 0, ok: 0, errores: 0, ms: 0, porSeg: 0, porParticion: {}, resultado: false });
+
+async function testCarga() {
+    carga.corriendo = true; carga.resultado = false;
+    carga.hecho = 0; carga.ok = 0; carga.errores = 0; carga.porParticion = {};
+    try {
+        if (!infoTopico(T_CARGA)) {
+            addLog('info', '🆕', `Creando ${T_CARGA} (3P/3R)`);
+            await kafkaCrearTopico({ nombre: T_CARGA, particiones: 3, replicas: 3, configs: { 'cleanup.policy': 'delete', 'retention.ms': '3600000' } });
+        }
+    } catch (e) {
+        if (!/exist/i.test(e.message)) {
+            avisar('err', e.message); carga.corriendo = false; return;
+        }
+    }
+    addLog('info', '🚀', `Test de carga: ${carga.cantidad} mensajes → ${T_CARGA}`);
+    const inicio = performance.now();
+    let siguiente = 1;
+    const hilos = 6;
+    async function worker() {
+        while (siguiente <= carga.cantidad) {
+            const n = siguiente++;
+            const valor = JSON.stringify({ eventId: crypto.randomUUID(), tipo: 'CARGA', numero: n, ocurridoEn: new Date().toISOString(), origen: 'test-carga' });
+            let enviado = false;
+            for (let intento = 0; intento < 3 && !enviado; intento++) {
+                try {
+                    const r = await kafkaPublicar(T_CARGA, { clave: 'CARGA-' + n, valor });
+                    carga.porParticion[r.particion] = (carga.porParticion[r.particion] || 0) + 1;
+                    carga.ok++; enviado = true;
+                } catch (e) {
+                    await esperar(200 * (intento + 1));
+                }
+            }
+            if (!enviado) carga.errores++;
+            carga.hecho++;
+        }
+    }
+    await Promise.all(Array.from({ length: hilos }, worker));
+    carga.ms = Math.round(performance.now() - inicio);
+    carga.porSeg = Math.round(carga.ok / (carga.ms / 1000));
+    carga.resultado = true;
+    carga.corriendo = false;
+    addLog(carga.errores ? 'warn' : 'success', '📊', `Test de carga: ${carga.ok}/${carga.cantidad} en ${carga.ms} ms (${carga.porSeg} msg/s)`);
+    avisar(carga.errores ? 'err' : 'ok', `Test de carga: ${carga.ok} mensajes publicados en ${carga.ms} ms.`);
     await cargar(true, true);
 }
 
@@ -944,6 +1064,10 @@ onBeforeUnmount(() => {
 code{font-family:monospace;font-size:0.75rem;color:var(--accent);background:rgba(124,92,252,0.08);padding:2px 6px;border-radius:4px;word-break:break-all;}
 .test-btns{display:flex;gap:8px;margin:4px 0 8px;flex-wrap:wrap;}
 .text-ok{color:#22c55e;}.text-err{color:#ef4444;}
+.guia-ms{width:100%;border-collapse:collapse;font-size:0.76rem;margin-top:6px;}
+.guia-ms th{text-align:left;color:var(--text-muted);font-weight:600;padding:3px 6px;}
+.guia-ms td{padding:3px 6px;border-top:1px solid var(--border);}
+.btn-usar{border:1px solid var(--border);background:transparent;color:var(--accent);border-radius:6px;padding:1px 8px;font-size:0.72rem;cursor:pointer;}
 .ms-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.82rem;}
 .ms-row:last-child{border-bottom:none;}
 .ms-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
