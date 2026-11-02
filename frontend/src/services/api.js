@@ -1,4 +1,7 @@
 const BASE_URL = "";
+// Las llamadas a /api pasan por el API Manager (API Gateway), que valida el JWT de Azure AD.
+// /auth/login y /register no llevan JWT, por eso siguen por BASE_URL (nginx).
+const API_URL = "https://3vy9ombqy6.execute-api.us-east-1.amazonaws.com";
 
 export const getToken  = () => localStorage.getItem("azure_token") || localStorage.getItem("token");
 export const getRol    = () => localStorage.getItem("rol");
@@ -37,31 +40,31 @@ export async function register(data) {
     return res.json();
 }
 
-export async function getProductos() { return fetchJSON(`${BASE_URL}/api/productos`, { headers: getHeaders() }); }
-export async function crearProducto(data) { return fetchJSON(`${BASE_URL}/api/productos`, { method:"POST", headers:getHeaders(), body:JSON.stringify(data) }); }
-export async function editarProducto(id, data) { return fetchJSON(`${BASE_URL}/api/productos/${id}`, { method:"PUT", headers:getHeaders(), body:JSON.stringify(data) }); }
+export async function getProductos() { return fetchJSON(`${API_URL}/api/productos`, { headers: getHeaders() }); }
+export async function crearProducto(data) { return fetchJSON(`${API_URL}/api/productos`, { method:"POST", headers:getHeaders(), body:JSON.stringify(data) }); }
+export async function editarProducto(id, data) { return fetchJSON(`${API_URL}/api/productos/${id}`, { method:"PUT", headers:getHeaders(), body:JSON.stringify(data) }); }
 export async function eliminarProducto(id) {
-    const res = await fetch(`${BASE_URL}/api/productos/${id}`, { method:"DELETE", headers:getHeaders() });
+    const res = await fetch(`${API_URL}/api/productos/${id}`, { method:"DELETE", headers:getHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 }
 
-export async function getPedidos() { return fetchJSON(`${BASE_URL}/api/productos/pedidos`, { headers: getHeaders() }); }
-export async function crearPedido(data) { return fetchJSON(`${BASE_URL}/api/productos/pedidos`, { method:"POST", headers:getHeaders(), body:JSON.stringify(data) }); }
-export async function cambiarEstadoPedido(id, estado) { return fetchJSON(`${BASE_URL}/api/productos/pedidos/${id}/estado?estado=${estado}`, { method:"PATCH", headers:getHeaders() }); }
+export async function getPedidos() { return fetchJSON(`${API_URL}/api/productos/pedidos`, { headers: getHeaders() }); }
+export async function crearPedido(data) { return fetchJSON(`${API_URL}/api/productos/pedidos`, { method:"POST", headers:getHeaders(), body:JSON.stringify(data) }); }
+export async function cambiarEstadoPedido(id, estado) { return fetchJSON(`${API_URL}/api/productos/pedidos/${id}/estado?estado=${estado}`, { method:"PATCH", headers:getHeaders() }); }
 
-export async function getEnvios() { return fetchJSON(`${BASE_URL}/api/productos/envios`, { headers: getHeaders() }); }
-export async function crearEnvio(data) { return fetchJSON(`${BASE_URL}/api/productos/envios`, { method:"POST", headers:getHeaders(), body:JSON.stringify(data) }); }
-export async function cambiarEstadoEnvio(id, estado) { return fetchJSON(`${BASE_URL}/api/productos/envios/${id}/estado?estado=${estado}`, { method:"PATCH", headers:getHeaders() }); }
+export async function getEnvios() { return fetchJSON(`${API_URL}/api/productos/envios`, { headers: getHeaders() }); }
+export async function crearEnvio(data) { return fetchJSON(`${API_URL}/api/productos/envios`, { method:"POST", headers:getHeaders(), body:JSON.stringify(data) }); }
+export async function cambiarEstadoEnvio(id, estado) { return fetchJSON(`${API_URL}/api/productos/envios/${id}/estado?estado=${estado}`, { method:"PATCH", headers:getHeaders() }); }
 
-export async function getUsuarios() { return fetchJSON(`${BASE_URL}/api/productos/usuarios`, { headers: getHeaders() }); }
-export async function actualizarUsuario(id, data) { return fetchJSON(`${BASE_URL}/api/productos/usuarios/${id}`, { method:"PUT", headers:getHeaders(), body:JSON.stringify(data) }); }
+export async function getUsuarios() { return fetchJSON(`${API_URL}/api/productos/usuarios`, { headers: getHeaders() }); }
+export async function actualizarUsuario(id, data) { return fetchJSON(`${API_URL}/api/productos/usuarios/${id}`, { method:"PUT", headers:getHeaders(), body:JSON.stringify(data) }); }
 
 // =====================================================================
 // RABBITMQ (EP2) - todo pasa por el BFF (/api/rabbit) con el token JWT.
 // El BFF reenvia al microservicio rabbitadmin; el front nunca le habla directo.
 // =====================================================================
 async function rabbitFetch(path, options = {}) {
-    const res = await fetch(`${BASE_URL}/api/rabbit${path}`, { ...options, headers: getHeaders() });
+    const res = await fetch(`${API_URL}/api/rabbit${path}`, { ...options, headers: getHeaders() });
     const text = await res.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch { data = null; }
@@ -113,7 +116,7 @@ export const rabbitPublicar = (data) =>
 // El BFF reenvia al microservicio kafkaadmin; el front nunca le habla directo.
 // =====================================================================
 async function kafkaFetch(path, options = {}) {
-    const res = await fetch(`${BASE_URL}/api/kafka${path}`, { ...options, headers: getHeaders() });
+    const res = await fetch(`${API_URL}/api/kafka${path}`, { ...options, headers: getHeaders() });
     const text = await res.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch { data = null; }

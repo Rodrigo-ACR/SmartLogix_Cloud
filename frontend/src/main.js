@@ -7,7 +7,7 @@ import './assets/styles/main.css';
 import './assets/styles/navbar.css';
 import './assets/styles/login.css';
 
-const BASE_URL = '';
+const BASE_URL = 'https://3vy9ombqy6.execute-api.us-east-1.amazonaws.com'; // API Manager (API Gateway)
 
 async function sincronizarUsuarioAzure(token, nombre, correo, rol) {
   try {
