@@ -19,7 +19,9 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# ── 1. CLAVE SSH ─────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════
+# 1. CLAVE SSH
+# ══════════════════════════════════════════════════════
 resource "tls_private_key" "clave_ssh" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -36,11 +38,13 @@ resource "local_file" "guardar_clave" {
   file_permission = "0400"
 }
 
-# ── 2. RED ───────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════
+# 2. RED
+# ══════════════════════════════════════════════════════
 resource "aws_vpc" "vpc_smartlogix" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
-  tags = { Name = "vpc-smartlogix" }
+  tags                 = { Name = "vpc-smartlogix" }
 }
 
 resource "aws_internet_gateway" "igw" {
@@ -53,7 +57,7 @@ resource "aws_subnet" "subred_publica" {
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
-  tags = { Name = "subred-publica-smartlogix" }
+  tags                    = { Name = "subred-publica-smartlogix" }
 }
 
 resource "aws_route_table" "rt_publica" {
@@ -70,13 +74,16 @@ resource "aws_route_table_association" "assoc_publica" {
   route_table_id = aws_route_table.rt_publica.id
 }
 
-# ── 3. SECURITY GROUP ────────────────────────────────────────────
+# ══════════════════════════════════════════════════════
+# 3. SECURITY GROUP
+# ══════════════════════════════════════════════════════
 resource "aws_security_group" "sg_smartlogix" {
   name        = "smartlogix-sg"
   description = "SmartLogix - puertos necesarios"
   vpc_id      = aws_vpc.vpc_smartlogix.id
 
   ingress {
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -84,6 +91,7 @@ resource "aws_security_group" "sg_smartlogix" {
   }
 
   ingress {
+    description = "HTTP (redirect a HTTPS)"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -91,6 +99,7 @@ resource "aws_security_group" "sg_smartlogix" {
   }
 
   ingress {
+    description = "HTTPS (nginx + MSAL)"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
@@ -98,6 +107,7 @@ resource "aws_security_group" "sg_smartlogix" {
   }
 
   ingress {
+    description = "Frontend Vue (dev)"
     from_port   = 5173
     to_port     = 5173
     protocol    = "tcp"
@@ -105,6 +115,7 @@ resource "aws_security_group" "sg_smartlogix" {
   }
 
   ingress {
+    description = "BFF - consumido por API Gateway"
     from_port   = 8085
     to_port     = 8085
     protocol    = "tcp"
@@ -112,6 +123,7 @@ resource "aws_security_group" "sg_smartlogix" {
   }
 
   ingress {
+    description = "Eureka Dashboard"
     from_port   = 8761
     to_port     = 8761
     protocol    = "tcp"
@@ -119,6 +131,7 @@ resource "aws_security_group" "sg_smartlogix" {
   }
 
   ingress {
+    description = "Microservicios (inventario, pedidos, envios, usuarios)"
     from_port   = 8091
     to_port     = 8094
     protocol    = "tcp"
@@ -132,19 +145,56 @@ resource "aws_security_group" "sg_smartlogix" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "RabbitMQ Management UI"
+    from_port   = 15672
+    to_port     = 15672
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "RabbitAdmin microservicio"
+    from_port   = 8095
+    to_port     = 8095
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Kafka UI (login con usuario/clave)"
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "KafkaAdmin microservicio"
+    from_port   = 8096
+    to_port     = 8096
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Los brokers de Kafka (9092 interno, 19092-19094 externo) y Zookeeper (2181)
+  # NO se exponen: solo se comunican dentro de la red de Docker.
+
   tags = { Name = "sg-smartlogix" }
 }
 
-# ── 4. INSTANCIA EC2 ─────────────────────────────────────────────
+# ══════════════════════════════════════════════════════
+# 4. INSTANCIA EC2
+# ══════════════════════════════════════════════════════
 resource "aws_instance" "ec2_smartlogix" {
   ami                    = "ami-00e801948462f718a"
-  instance_type          = "t3.micro"
+  instance_type          = var.instance_type
   subnet_id              = aws_subnet.subred_publica.id
   vpc_security_group_ids = [aws_security_group.sg_smartlogix.id]
   key_name               = aws_key_pair.key_pair.key_name
 
   root_block_device {
-    volume_size = 20
+    volume_size = var.root_volume_size
     volume_type = "gp3"
   }
 
@@ -161,6 +211,13 @@ resource "aws_instance" "ec2_smartlogix" {
       -o /usr/local/lib/docker/cli-plugins/docker-compose
     chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
+    # Swap 4GB — red de seguridad de memoria con Kafka (3 ZK + 3 brokers) + Rabbit + microservicios
+    dd if=/dev/zero of=/swapfile bs=128M count=32
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
     cd /home/ec2-user
     git clone https://github.com/Rodrigo-ACR/SmartLogix_Cloud.git SmartLogix
     chown -R ec2-user:ec2-user SmartLogix
@@ -171,20 +228,95 @@ resource "aws_instance" "ec2_smartlogix" {
   tags = { Name = "ec2-smartlogix" }
 }
 
-# ── 5. IP ELÁSTICA ───────────────────────────────────────────────
+# ══════════════════════════════════════════════════════
+# 5. IP ELÁSTICA
+# ══════════════════════════════════════════════════════
 resource "aws_eip" "eip_smartlogix" {
   instance = aws_instance.ec2_smartlogix.id
   domain   = "vpc"
   tags     = { Name = "eip-smartlogix" }
 }
 
-# ── 6. OUTPUTS ───────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════
+# 6. API GATEWAY (HTTP API) + AUTORIZADOR JWT AZURE AD
+# ══════════════════════════════════════════════════════
+resource "aws_apigatewayv2_api" "smartlogix_api" {
+  name          = "SmartLogix-API"
+  protocol_type = "HTTP"
+  description   = "API Gateway SmartLogix - valida JWT de Azure AD (Tenant SmartLogix)"
+
+  cors_configuration {
+    allow_origins  = ["https://100.51.163.7", "http://100.51.163.7:5173"]
+    allow_methods  = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    allow_headers  = ["Authorization", "Content-Type", "ngrok-skip-browser-warning"]
+    expose_headers = ["Authorization"]
+    max_age        = 300
+  }
+}
+
+resource "aws_apigatewayv2_authorizer" "azuread_jwt" {
+  api_id           = aws_apigatewayv2_api.smartlogix_api.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "AzureAD-JWT"
+
+  jwt_configuration {
+    # Tenant "Evaluacion SmartLogix" (mismo que usa el frontend y el BFF)
+    audience = [
+      "2b5921ae-eb94-4deb-aea5-38abef3d7cec",
+      "api://2b5921ae-eb94-4deb-aea5-38abef3d7cec"
+    ]
+    issuer   = "https://login.microsoftonline.com/99383baf-0e02-4567-b639-98d2b555a85d/v2.0"
+  }
+}
+
+resource "aws_apigatewayv2_integration" "bff_integration" {
+  api_id                 = aws_apigatewayv2_api.smartlogix_api.id
+  integration_type       = "HTTP_PROXY"
+  integration_method     = "ANY"
+  integration_uri        = "http://${aws_eip.eip_smartlogix.public_ip}:8085/{proxy}"
+  payload_format_version = "1.0"
+  connection_type        = "INTERNET"
+  timeout_milliseconds   = 29000
+
+  depends_on = [aws_eip.eip_smartlogix]
+}
+
+resource "aws_apigatewayv2_route" "proxy_route" {
+  api_id             = aws_apigatewayv2_api.smartlogix_api.id
+  route_key          = "ANY /{proxy+}"
+  target             = "integrations/${aws_apigatewayv2_integration.bff_integration.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.azuread_jwt.id
+}
+
+# Ruta OPTIONS sin autorización — necesaria para el preflight CORS
+resource "aws_apigatewayv2_route" "options_route" {
+  api_id    = aws_apigatewayv2_api.smartlogix_api.id
+  route_key = "OPTIONS /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.bff_integration.id}"
+}
+
+resource "aws_apigatewayv2_stage" "default_stage" {
+  api_id      = aws_apigatewayv2_api.smartlogix_api.id
+  name        = "$default"
+  auto_deploy = true
+
+  default_route_settings {
+    throttling_burst_limit = 50
+    throttling_rate_limit  = 100
+  }
+}
+
+# ══════════════════════════════════════════════════════
+# 7. OUTPUTS
+# ══════════════════════════════════════════════════════
 output "ip_publica" {
   value = aws_eip.eip_smartlogix.public_ip
 }
 
 output "frontend_url" {
-  value = "http://${aws_eip.eip_smartlogix.public_ip}:5173"
+  value = "https://${aws_eip.eip_smartlogix.public_ip}"
 }
 
 output "bff_url" {
@@ -197,4 +329,23 @@ output "eureka_url" {
 
 output "ssh_comando" {
   value = "ssh -i clave-smartlogix.pem ec2-user@${aws_eip.eip_smartlogix.public_ip}"
+}
+
+output "api_gateway_url" {
+  value       = aws_apigatewayv2_api.smartlogix_api.api_endpoint
+  description = "URL del API Gateway — úsala en el frontend para pasar por AWS"
+}
+
+output "api_gateway_id" {
+  value = aws_apigatewayv2_api.smartlogix_api.id
+}
+
+output "kafka_ui_url" {
+  value       = "http://${aws_eip.eip_smartlogix.public_ip}:8081"
+  description = "Kafka UI (login por defecto admin / smartlogix)"
+}
+
+output "kafkaadmin_url" {
+  value       = "http://${aws_eip.eip_smartlogix.public_ip}:8096/swagger-ui.html"
+  description = "Swagger del microservicio administrador de Kafka"
 }
